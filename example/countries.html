@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<head>
+  <script src="http://cdn.webix.io/edge/webix.js" type="text/javascript" charset="utf-8"></script>
+  <link rel="stylesheet" href="http://cdn.webix.io/edge/webix.css" type="text/css" charset="utf-8">
+  <style>
+    :root {
+      font-size: 12pt;
+    }
+
+    html,
+    body,
+    main,
+    .d3 {
+      height: 100vh;
+      width: 100vw;
+    }
+
+    line {
+      stroke: blue;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Webix Integration Demo</h1>
+  <main>
+    <section class="d3">
+    </section>
+  </main>
+</body>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script>
+  const api = 'https://raw.githubusercontent.com/DealPete/forceDirected/master/countries.json'
+
+  let root = d3.select(".d3"),
+    width = +root.attr("width"),
+    height = +root.attr("height")
+
+  let svg = root.append('svg')
+    .attr("width", width)
+    .attr("height", height)
+  let chartLayer = svg.append("g").classed("chartLayer", true);
+
+  let color = d3.scaleOrdinal(d3.schemeCategory20);
+
+  function setSize(data) {
+    width = document.querySelector(".d3").clientWidth
+    height = document.querySelector(".d3").clientHeight
+
+    margin = {
+      top: 0,
+      left: 0,
+      bottom: 0,
+      right: 0
+    }
+
+
+    chartWidth = width - (margin.left + margin.right)
+    chartHeight = height - (margin.top + margin.bottom)
+
+    svg.attr("width", width).attr("height", height)
+
+
+    chartLayer
+      .attr("width", chartWidth)
+      .attr("height", chartHeight)
+      .attr("transform", "translate(" + [margin.left, margin.top] + ")")
+
+
+  }
+
+  function drawChart(graph) {
+    let simulation = d3.forceSimulation()
+      .force("link", d3.forceLink().id((d, i) => d.index))
+      .force("charge", d3.forceManyBody())
+      .force("center", d3.forceCenter(width / 2, height / 2));
+    let link = chartLayer.append("g")
+      .attr("class", "links")
+      .selectAll("line")
+      .data(graph.links)
+      .enter().append("line")
+      .attr("stroke-width", () => 4);
+    let node = chartLayer.append("g")
+      .attr("class", "nodes")
+      .selectAll("circle")
+      .data(graph.nodes)
+      .enter().append("circle")
+      .attr("r", 5)
+      .attr("fill", d => color(1))
+      .call(d3.drag()
+        .on("start", dragstarted)
+        .on("drag", dragged)
+        .on("end", dragended))
+
+    simulation
+      .nodes(graph.nodes)
+      .on("tick", ticked);
+    // return;
+    simulation.force("link")
+      .links(graph.links);
+
+
+    function ticked() {
+      link
+        .attr("x1", function (d) {
+          return d.source.x;
+        })
+        .attr("y1", function (d) {
+          return d.source.y;
+        })
+        .attr("x2", function (d) {
+          return d.target.x;
+        })
+        .attr("y2", function (d) {
+          return d.target.y;
+        });
+
+      node
+        .attr("cx", function (d) {
+          return d.x;
+        })
+        .attr("cy", function (d) {
+          return d.y;
+        });
+    }
+
+
+    function dragstarted(d) {
+      if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+      d.fx = d.x;
+      d.fy = d.y;
+    }
+
+    function dragged(d) {
+      d.fx = d3.event.x;
+      d.fy = d3.event.y;
+    }
+
+    function dragended(d) {
+      if (!d3.event.active) simulation.alphaTarget(0);
+      d.fx = null;
+      d.fy = null;
+    }
+  }
+  d3.json(api, function (error, graph) {
+    if (error)
+      throw error
+    console.log(graph, error)
+    setSize(graph);
+    drawChart(graph);
+  })
+</script>
