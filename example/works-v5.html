@@ -33,7 +33,7 @@
       });
     }
 
-    // 2. svg要素を配置
+    // 2. Links as lines
     var link = d3.select("svg")
       .selectAll("line")
       .data(linksData)
@@ -42,34 +42,38 @@
       .attr("stroke-width", 1)
       .attr("stroke", "black");
 
-    var node = d3.select("svg")
-      .selectAll("circle")
-      .data(nodesData)
-      .enter()
-      .append("circle")
-      .attr("r", function (d) {
-        return d.r
-      })
-      .attr("fill", "LightSalmon")
-      .attr("stroke", "black")
-      .call(d3.drag()
-        .on("start", dragstarted)
-        .on("drag", dragged)
-        .on("end", dragended));
+    // var node = d3.select("svg")
+    //   .selectAll("circle")
+    //   .data(nodesData)
+    //   .enter()
 
     let groups = d3
       .select("svg")
       .selectAll(".group")
       .data(nodesData)
       .enter()
-      .append("g");
+      .append("g")
+      .call(d3.drag()
+        .on("start", dragstarted)
+        .on("drag", dragged)
+        .on("end", dragended));
+
+    groups
+      .append("circle")
+      .attr('cx', -9)
+      .attr("r", function (d) {
+        return d.r
+      })
+      .attr("fill", "LightSalmon")
+      .attr("stroke", "black")
+
 
     groups.append("circle").attr("r", 5);
     groups.append("text").attr('x', 7).attr('y', 5).text(function (d, i) {
       return `hello ${i}`;
     });
 
-    // 3. forceSimulation設定
+    // 3. forceSimulation
     var simulation = d3.forceSimulation()
       .force("link",
         d3.forceLink()
@@ -118,16 +122,17 @@
         .attr("y2", function (d) {
           return d.target.y;
         });
-      node
-        .attr("cx", function (d) {
-          return d.x;
-        })
-        .attr("cy", function (d) {
-          return d.y;
-        });
+
+      // node
+      //   .attr("cx", function (d) {
+      //     return d.x;
+      //   })
+      //   .attr("cy", function (d) {
+      //     return d.y;
+      //   });
     }
 
-    // 5. ドラッグ時のイベント関数
+    // 5. Drag control
     function dragstarted(d) {
       if (!d3.event.active) simulation.alphaTarget(0.3).restart();
       d.fx = d.x;
